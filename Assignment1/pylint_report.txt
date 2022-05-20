@@ -1,0 +1,17 @@
+ ************* Module assignment1
+ assignment1.py:42: convention (C0301, line-too-long, ) Line too long (140/100)
+ assignment1.py:46: convention (C0301, line-too-long, ) Line too long (146/100)
+ assignment1.py:61: convention (C0305, trailing-newlines, ) Trailing newlines
+ assignment1.py:13: convention (C0116, missing-function-docstring, ncbi_query) Missing function or method docstring
+ assignment1.py:15: warning (W0621, redefined-outer-name, ncbi_query) Redefining name 'results' from outer scope (line 59)
+ assignment1.py:24: convention (C0116, missing-function-docstring, make_dir) Missing function or method docstring
+ assignment1.py:31: convention (C0116, missing-function-docstring, download_ncbi_refs) Missing function or method docstring
+ assignment1.py:41: convention (C0116, missing-function-docstring, interface) Missing function or method docstring
+ assignment1.py:47: warning (W0621, redefined-outer-name, interface) Redefining name 'args' from outer scope (line 53)
+ assignment1.py:10: convention (C0411, wrong-import-order, ) standard import "import os" should be placed before "from Bio import Entrez"
+ assignment1.py:11: convention (C0411, wrong-import-order, ) standard import "import time" should be placed before "from Bio import Entrez"
+ 
+ ------------------------------------------------------------------
+ Your code has been rated at 6.94/10 (previous run: 5.53/10, +1.42)
+ 
+ 
