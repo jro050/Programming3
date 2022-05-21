@@ -30,9 +30,10 @@ if __name__ == "__main__":
     pmid = "30049270"
     main_pmid = NCBIHandler(pmid)
     ref_ids = main_pmid.ncbi_query()
-
+    main_pmid.make_dir()
+    # print(ref_ids)
     server_start = Connect2Network(PORTNUM,AUTHKEY,IP)
-    server = mp.Process(target=server_start.runserver, args=(NCBIHandler.download_ncbi_refs, ref_ids))
+    server = mp.Process(target=server_start.runserver, args=(main_pmid.download_ncbi_refs, ref_ids))
     server.start()
     time.sleep(1)
     client = mp.Process(target=server_start.runclient, args=(4,))
