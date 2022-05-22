@@ -19,11 +19,11 @@ class Interface:
                             dest="n", required=False, type=int,
                             help="Number of peons per client.")
         modus = argparser.add_mutually_exclusive_group(required=False)
-        modus.add_argument("-c", action="store", help="Starts the Client modus")
-        modus.add_argument("-s", action="store", help="Starts the Server modus")
+        modus.add_argument("-c", action="store_true", help="Starts the Client modus")
+        modus.add_argument("-s", action="store_true", help="Starts the Server modus")
         argparser.add_argument("--port", action="store", required=False, type=int,
                             help="Portnumber")
-        argparser.add_argument("--host", action="store", required=True, type=int,
+        argparser.add_argument("--host", action="store", required=True,
                             help="Serverhost")
         argparser.add_argument("-a", action="store", required=False, type=int,
                             help="Number of articles to download.")
