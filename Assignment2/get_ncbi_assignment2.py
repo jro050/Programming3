@@ -6,6 +6,7 @@ by Jan Rombouts
 
 import os
 import time
+import pickle
 from Bio import Entrez, Medline
 
 # Your script needs to analyze the XML of each of the references further to extract all the authors of the article. CHECK
@@ -57,8 +58,9 @@ class NCBIHandler:
                                 retmode="text", api_key='747992ecd1ef352c0c878188cd4804449a08')
         record = list(Medline.parse(handle))
         auth_list = record[0]["AU"]
-        with open(f'output/{pmid}.authors.pickle', 'w') as file:
-                file.write(str(auth_list))
+        pickle.dump(auth_list, open(f'output/{pmid}.authors.pkl', 'wb'))
+        # with open(f'output/{pmid}.authors.pickle', 'w') as file:
+        #         file.write(str(auth_list))
         time.sleep(1/10) # limit to max 10 queries per second
         print(f"Succesfully fetched authors from {pmid}")
 
