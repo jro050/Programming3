@@ -9,12 +9,10 @@ import time
 import pickle
 from Bio import Entrez, Medline
 
-# Your script needs to analyze the XML of each of the references further to extract all the authors of the article. CHECK
-# It should save the authors in a Python tuple and use the Pickle module to save it to the disk as CHECK
-# output/PUBMED_ID.authors.pickle where PUBMEDID is of course the pubmed ID of the article in question CHECK
-# NB3: you need to both save the downloaded xml files and communicate the reference PUBMEDs back to the server !!!
-
 class NCBIHandler:
+    '''
+    Class to fetch data from ncbi using Biopython
+    '''
     def __init__(self, pmid, n=10):
         self.pmid = pmid
         self.n_refs = n
@@ -28,7 +26,10 @@ class NCBIHandler:
                                     id=self.pmid,
                                     api_key='747992ecd1ef352c0c878188cd4804449a08'))
         references = [f'{link["Id"]}' for link in results[0]["LinkSetDb"][0]["Link"]]
-        return references[0:self.n_refs] #only return first n references
+        if len(references) < self.n_refs:
+            return references
+        else:
+            return references[0:self.n_refs] #only return first n references
 
 
     def make_dir(self):
@@ -49,6 +50,7 @@ class NCBIHandler:
         self.download_article_authors(pmid)
         time.sleep(1/10) # limit to max 10 queries per second
         print(f"Succesfully fetched references from {pmid}")
+        return pmid
 
 
     def download_article_authors(self, pmid):
@@ -59,18 +61,5 @@ class NCBIHandler:
         record = list(Medline.parse(handle))
         auth_list = record[0]["AU"]
         pickle.dump(auth_list, open(f'output/{pmid}.authors.pkl', 'wb'))
-        # with open(f'output/{pmid}.authors.pickle', 'w') as file:
-        #         file.write(str(auth_list))
         time.sleep(1/10) # limit to max 10 queries per second
         print(f"Succesfully fetched authors from {pmid}")
-
-# if __name__ == "__main__":
-#     args = interface()
-#     make_dir("output")
-#     ref_ids = ncbi_query(args.pubmed_id[0])
-
-#     cpus = mp.cpu_count()
-#     with mp.Pool(cpus) as pool:
-#         results = pool.map(download_ncbi_refs, ref_ids)
-#     print(f"Succesfully fetched references from {args.pubmed_id[0]}")
-
