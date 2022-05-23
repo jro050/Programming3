@@ -1,6 +1,8 @@
 import multiprocessing as mp
 from multiprocessing.managers import BaseManager, SyncManager
-import time, queue, os
+import time
+import queue
+import os
 
 
 class Connect2Network:
@@ -40,17 +42,17 @@ class Connect2Network:
         manager = self.make_server_manager()
         shared_job_q = manager.get_job_q()
         shared_result_q = manager.get_result_q()
-        
+
         if not data:
             print("Gimme something to do here!")
             return
-        
+
         print("Sending data!")
         for d in data:
             shared_job_q.put({'fn' : fn, 'arg' : d})
-        
-        time.sleep(2)  
-        
+
+        time.sleep(2)
+
         results = []
         while True:
             try:
@@ -98,7 +100,7 @@ class Connect2Network:
         job_q = manager.get_job_q()
         result_q = manager.get_result_q()
         self.run_workers(job_q, result_q, num_processes)
-        
+
     def run_workers(self, job_q, result_q, num_processes):
         processes = []
         for p in range(num_processes):
