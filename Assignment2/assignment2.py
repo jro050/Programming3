@@ -3,53 +3,94 @@ Assignment 2 Programming 3
 Data Sciences for Life Sciences
 by Jan Rombouts
 """
-import multiprocessing as mp
-# from multiprocessing.managers import BaseManager, SyncManager
 import time
-# import argparse as ap
-# from Bio import Entrez
-
+import socket
+import multiprocessing as mp
 from interface_assignment_2 import Interface
 from network_comp_assignment_2 import Connect2Network
 from get_ncbi_assignment2 import NCBIHandler
 
-# Download and analyze the NCBI articles from different "remote" clients
-# You can test all this using '' as your IP (remember this means : localhost)
-# For the time being, start clients by hand using the "ssh" command to connect terminals to different computers on the BIN network.
+class TestArgs:
+    '''
+    Function to test for valid args for assignment 2
+    Parameters:
+        Input: arguments
+        Output: validated or standard arguments
+    '''
+    def __init__(self, arguments):
+        self.args = arguments
 
-# # assignment2.py -n <number_of_peons_per_client> [-c | -s] --port <portnumber> --host <serverhost> -a <number_of_articles_to_download> STARTING_PUBMED_ID
 
-# NB2: if you want to run truly networked, specify at least two hosts: the first one is assumed to run the server process, all hosts after that are clients
-# NB3: you need to both save the downloaded xml files and communicate the reference PUBMEDs back to the server
+    def test_peons(self):
+        if not self.args.n:
+            return 4
+        else:
+            return self.args.n
+
+
+    def test_mode(self):
+        if self.args.c:
+            return 'c'
+        elif self.args.s:
+            return 's'
+        else:
+            return 'local'
+
+
+    def test_port(self):
+        if not self.args.port:
+            sock = socket.socket()
+            sock.bind(('', 0))
+            return sock.getsockname()[1]
+        else:
+            return self.args.port
+
+
+    def test_host(self):
+        if not self.args.host:
+            return ''
+        else:
+            return self.args.host
+
+
+    def test_pmid(self):
+        if 1 < len(self.args.pubmed_id[0]) > 8:
+            raise ValueError('Not a valid PMID')
+        else:
+            return self.args.pubmed_id[0]
+
 
 if __name__ == "__main__":
+#  to test :python3 assignment2.py -n 5 -s --port 4 --host '' -a 10 30049270
     AUTHKEY = b'whathasitgotinitspocketsesss?'
-    input_args = Interface()
-    IP = input_args.args.host
-    PORTNUM = input_args.args.port
-    number_refs = input_args.args.a
-    pmid = input_args.args.pubmed_id[0]
+    interface = Interface()
+    input_args = TestArgs(interface.args)
+    number_refs = interface.args.a
+    IP = input_args.test_host()
+    PORTNUM = input_args.test_port()
+    number_peons = input_args.test_peons()
+    pmid = input_args.test_pmid()
+    run_mode = input_args.test_mode()
 
     main_pmid = NCBIHandler(pmid, number_refs)
     ref_ids = main_pmid.ncbi_query()
     main_pmid.make_dir()
 
-    # server_start = Connect2Network(PORTNUM,AUTHKEY,IP)
-    # server = mp.Process(target=server_start.runserver, args=(main_pmid.download_ncbi_refs, ref_ids))
-    # server.start()
-    # time.sleep(1)
-    # client = mp.Process(target=server_start.runclient, args=(4,))
-    # client.start()
-    # server.join()
-    # client.join()
+    host = Connect2Network(PORTNUM,AUTHKEY,IP)
+    if run_mode == "c":
+        client = mp.Process(target=host.runclient, args=(number_peons,))
+        client.start()
+        client.join()
 
+    if run_mode == "s":
+        server = mp.Process(target=host.runserver, args=(main_pmid.download_ncbi_refs, ref_ids))
+        server.start()
+        time.sleep(1)
+        server.join()
 
-# 1.2.1. In this first test iteration, you need to start clients manually:
-# this means using ssh to log in to the hosts where the clients should run and starting them by hand CHECK
-# 1.2.2. In this first iteration, only specify the first host (the server) with the "–host": CHECK
-# this is the host where the server runs and which the clients should try to contact CHECK
-# 1.2.3. You need to specify an option "-c" or "-s" which specifies whether your script starts as a server, or as a client.
-# You can use the argparse.addmutuallyexclusivegroup option for this! CHECK
-# 1.2.4. Perhaps superflously: if you start as a server the script needs to run on the host
-# specified in "–host" argument (otherwise you can't bind the address in QueueManager)
-# 1.2.5. Don't forget to run clients in "tmux" sessions!
+    if run_mode == 'local':
+        server = mp.Process(target=host.runserver, args=(main_pmid.download_ncbi_refs, ref_ids))
+        server.start()
+        time.sleep(1)
+        client = mp.Process(target=host.runclient, args=(number_peons,))
+        client.start()
