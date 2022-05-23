@@ -5,11 +5,11 @@ by Jan Rombouts
 """
 
 import argparse as ap
-import sys
-
-# assignment2.py -n <number_of_peons_per_client> [-c | -s] --port <portnumber> --host <serverhost> -a <number_of_articles_to_download> STARTING_PUBMED_ID
 
 class Interface:
+    '''
+    Interface class for assignment2.py for course PROG3
+    '''
     def __init__(self):
         self.args = self.interface()
 
@@ -28,15 +28,9 @@ class Interface:
         argparser.add_argument("-a", action="store", required=False, type=int,
                             help="Number of articles to download.")
         argparser.add_argument("pubmed_id", action="store", type=str, nargs=1, help="Pubmed ID of the article to harvest for references to download.")
-        # args = argparser.parse_args()
-        
-        if len(sys.argv) == 1:
-            argparser.print_help()
         args = argparser.parse_args()
         return args
 
-        # "-n", action="store",
-        #                     dest="n", required=True, type=str,
-        #                     help="Server or Client modus."
+
 if __name__ == "__main__":
     Interface()
