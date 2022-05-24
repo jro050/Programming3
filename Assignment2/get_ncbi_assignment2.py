@@ -47,10 +47,10 @@ class NCBIHandler:
                             api_key='747992ecd1ef352c0c878188cd4804449a08')
         with open(f'output/{pmid}.xml', 'wb') as file:
             file.write(handle.read())
-        self.download_article_authors(pmid)
+        auth_list = self.download_article_authors(pmid)
         time.sleep(1/10) # limit to max 10 queries per second
         print(f"Succesfully fetched references from {pmid}")
-        return pmid
+        return auth_list
 
 
     def download_article_authors(self, pmid):
@@ -63,3 +63,4 @@ class NCBIHandler:
         pickle.dump(auth_list, open(f'output/{pmid}.authors.pkl', 'wb'))
         time.sleep(1/10) # limit to max 10 queries per second
         print(f"Succesfully fetched authors from {pmid}")
+        return auth_list
