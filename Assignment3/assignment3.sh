@@ -1,27 +1,14 @@
 #!/bin/bash
-#SBATCH --time 2:00:00
+chmod u+x assignment3.sh
+chmod a+x assignment3.py
+#SBATCH --time 7:00:00
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=16
-#SBATCH --partition=short
-#SBATCH --mem=size_in_MB
-#SBATCH --output=somefile
+#SBATCH --partition=assemblix
+#SBATCH --mem=3000
 
-# run with -num_threads from 1 to 16 on query file MCRA.faa
-export BLASTDB=/local-fs/datasets/
-for x in {1..16} ; do time blastp -query MCRA.faa -db refseq_protein/refseq_protein -num_threads $x -outfmt 6 >> timings.txt ; done
+export BLASTDB=~/local-fs/datasets/refseq_protein
+mkdir output
+for x in {1..16} ; do /usr/bin/time -ao output/timings.txt -f "${x} %e" blastp -query MCRA.faa -db /local-fs/datasets/refseq_protein/refseq_protein -num_threads 16 -outfmt 6 >> output/blastoutput_num_threads_${x}.txt ; done
 
-# capture time in seconds of runtime in a file
-# called timings.txt in output directory
-# based on linux time command
-# /usr/bin/time
-
-# timings.png file of matplotlib plot
-# x-axis: number-if-threads
-# y-axis: time taken (s)
-
-# Make sure the python executable is in your PATH environment
-# variable then add in your script
-# python path/to/the/python_script.py
-
-#!/bin/sh
-python python_script.py
+assignment3.py
