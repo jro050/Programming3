@@ -8,9 +8,8 @@ from pyspark import SparkFiles
 from pyspark import SparkContext
 from pyspark.sql import Row
 from pyspark.sql import SQLContext
+# from interface_assignment5 import interface
 from CreateSparkDF import create_spark_df
-from interface_assignment5 import interface
-
     
 # df = sqlContext.read.csv(SparkFiles.get('us_pop.csv'), header=True, inferSchema= True)
 # df.printSchema()
@@ -20,18 +19,17 @@ from interface_assignment5 import interface
 class InspectInterPRO:
 
     def __init__(self, spark_df):
-        sc = SparkContext('local[16]')
-        self.df = spark.read_csv(path, sep=r'\t', header=True)
-        print(self.df)
+        self.df = spark_df
 
 
     def unique_pro_annots(self):
+        return self.df.select('interPRO_accession').distinct().count()
 # 1. How many distinct protein annotations are found in the dataset? I.e. how many distinc InterPRO numbers are there?
 # df[column].unique()
-        pass
 
 
     def avg_pro_annots(self):
+
 # 2. How many annotations does a protein have on average?
 # df[column].mean()
         pass
@@ -93,7 +91,6 @@ class InspectInterPRO:
 
 if __name__ == "__main__":
     path = '/data/dataprocessing/interproscan/all_bacilli.tsv'
-    df = CreateSparkDF(path)
-    InspectInterPRO(df)
-
-
+    df = create_spark_df(path)
+    inspect = InspectInterPRO(df)
+    inspect.unique_pro_annots()
