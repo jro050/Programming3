@@ -10,7 +10,7 @@ def interface():
     argparser = ap.ArgumentParser(description="Script that creates and analyzes InterPRO data loaded in a Spark DF.")
     argparser.add_argument("InterPRO_file_path", action="store",
                            dest="p", required=True, type=str,
-                           nargs=1
+                           nargs=1,
                            help="path of InterPRO file to analyze")
     args = argparser.parse_args()
     print("Analyzing: ", args.InterPRO_file_path)
