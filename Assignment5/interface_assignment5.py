@@ -8,14 +8,12 @@ import argparse as ap
 
 def interface():
     argparser = ap.ArgumentParser(description="Script that creates and analyzes InterPRO data loaded in a Spark DF.")
-    argparser.add_argument("InterPRO_file_path", action="store",
-                           dest="p", required=True, type=str,
+    argparser.add_argument("InterPRO_file_path", action="store", type=str,
                            nargs=1,
                            help="path of InterPRO file to analyze")
     args = argparser.parse_args()
-    print("Analyzing: ", args.InterPRO_file_path)
-    #  ONLY RETURN args.InterPRO_file_path
-    return args
+    print("Analyzing: ", args.InterPRO_file_path[0])
+    return args.InterPRO_file_path[0]
 
 
 if __name__ == "__main__":
