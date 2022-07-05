@@ -7,100 +7,65 @@ import time
 import socket
 import networkx as nx
 import multiprocessing as mp
-from interface_assignment_2 import Interface
-from network_comp_assignment_2 import Connect2Network
-
-class Graphstuff:
-    '''
-    Function to test for valid args for assignment 2
-    Parameters:
-        Input: arguments
-        Output: validated or standard arguments
-    '''
-    def __init__(self, path):
-        self.path = path
-
-
-    def parse_xml(self):
-        parse_graph = nx.read_graphml(self.path)
-
-
+from ParseInterface import ParseInterface
+from ParsePubmedXML import PubMedXMLParser
+from interface_assignment_6 import Interface
+from network_comp_assignment_6 import Connect2Network
 
 if __name__ == "__main__":
-#  to test :python3 assignment6.py -p testfile.xml -s --port 4 --host ''
+#  to test :python3 assignment6.py -s --port 4 --host '' /data/dataprocessing/NCBI/PubMed/pubmed21n0001.xml 
     AUTHKEY = b'whathasitgotinitspocketsesss?'
-    interface = Interface()
+    args = Interface()
+    parse_interface = ParseInterface(args.args)
+    fpath = parse_interface.folder_path()
+    IP = parse_interface.host_name()
+    PORTNUM = parse_interface.port_num()
+    number_peons = parse_interface.number_peons()
+    run_mode = parse_interface.run_mode()
+    
+    records = PubMedXMLParser(fpath)
+    pmids = [pmid for pmid in records.get_pmid()]
+    keyword_list = [keywords for keywords in records.get_keywords()]
+    publish_date = [dates for dates in records.get_publish_date()]
+    article_titles = [title for title in records.get_title()]
+    main_authors = [author for author in records.get_main_author()]
+    co_authors = [co_author for co_author in records.get_co_authors()]
+    journals = [journal for journal in records.get_journal()]
+    languages = [language for language in records.get_language()]
+    references = [reference for reference in records.get_references()]
+    print(len(references))
+    print(len(languages))
+    print(len(journals))
+    print(len(co_authors))
+    print(len(main_authors))
+    print(len(article_titles))
+    print(len(publish_date))
+    print(len(keyword_list))
+    print(len(pmids))
+    # for record in pmid:
+    #     print(record)
 
-#   input_args = TestArgs(interface.args)
-    fpath = interface.args.p
-    IP = input_args.test_host()
-    PORTNUM = input_args.test_port()
-    number_peons = input_args.test_peons()
-    pmid = input_args.test_pmid()
-    run_mode = input_args.test_mode()
-
-    main_pmid = NCBIHandler(pmid, number_refs)
-    ref_ids = main_pmid.ncbi_query()
-    main_pmid.make_dir()
-
-    host = Connect2Network(PORTNUM,AUTHKEY,IP)
-    if run_mode == "c":
-        client = mp.Process(target=host.runclient, args=(number_peons,))
-        client.start()
-        client.join()
-
-    if run_mode == "s":
-        server = mp.Process(target=host.runserver, args=(main_pmid.download_ncbi_refs, ref_ids))
-        server.start()
-        time.sleep(1)
-        server.join()
-
-    if run_mode == 'local':
-        server = mp.Process(target=host.runserver, args=(main_pmid.download_ncbi_refs, ref_ids))
-        server.start()
-        time.sleep(1)
-        client = mp.Process(target=host.runclient, args=(number_peons,))
-        client.start()
-
-
-#   def __init__(self, arguments):
-#         self.args = arguments
+    # auth_list = xml_file.read_xml()
 
 
-#     def test_peons(self):
-#         if not self.args.n:
-#             return 4
-#         else:
-#             return self.args.n
+    # host = Connect2Network(PORTNUM,AUTHKEY,IP)
+
+    # if run_mode == "c":
+    #     client = mp.Process(target=host.runclient, args=(number_peons,))
+    #     client.start()
+    #     client.join()
+
+    # if run_mode == "s":
+    #     server = mp.Process(target=host.runserver, args=(main_pmid.download_ncbi_refs, ref_ids))
+    #     server.start()
+    #     time.sleep(1)
+    #     server.join()
+
+    # if run_mode == 'local':
+    #     server = mp.Process(target=host.runserver, args=(main_pmid.download_ncbi_refs, ref_ids))
+    #     server.start()
+    #     time.sleep(1)
+    #     client = mp.Process(target=host.runclient, args=(number_peons,))
+    #     client.start()
 
 
-#     def test_mode(self):
-#         if self.args.c:
-#             return 'c'
-#         elif self.args.s:
-#             return 's'
-#         else:
-#             return 'local'
-
-
-#     def test_port(self):
-#         if not self.args.port:
-#             sock = socket.socket()
-#             sock.bind(('', 0))
-#             return sock.getsockname()[1]
-#         else:
-#             return self.args.port
-
-
-#     def test_host(self):
-#         if not self.args.host:
-#             return ''
-#         else:
-#             return self.args.host
-
-
-#     def test_pmid(self):
-#         if 1 < len(self.args.pubmed_id[0]) > 8:
-#             raise ValueError('Not a valid PMID')
-#         else:
-#             return self.args.pubmed_id[0]
