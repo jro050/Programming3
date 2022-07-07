@@ -2,6 +2,7 @@
 DOCSTRING
 '''
 
+from dataclasses import replace
 import time
 import pickle
 import os
@@ -135,8 +136,6 @@ class PubMedXMLParser:
             # yield ref_list    
 
     def get_ref_pmid(self, references):
-    ### another exception if the attribute of ArticleIdList = pmcid > try to parse with
-    ### get_ref_authors, otherwise skip
         ref_list = []
         for ref in references:
             try:
@@ -150,59 +149,40 @@ class PubMedXMLParser:
 
 
     def get_ref_authors(self, references):
-        regex_patterns = [
-            r'[A-Z]{1}\.\ [A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-]+',
-            r'[A-Z]{1}\.\ [A-Z]{1}\.\ [A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-]+',
-            r'[A-Z]{1}\.\ [A-Z]{1}\.\ [A-Z]{1}\.\ [A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-]+',
-            r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-]+\, [A-Z]{1}\.',
-            r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-]+\, [A-Z]{1}\. [A-Z]{1}\.',
-            r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-]+\, [A-Z]{1}\. [A-Z]{1}\. [A-Z]{1}\.',
-            r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-]+\ [A-Z]{1,3}(?![a-z])'
+        capital = r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}'
+        lowercase = r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-\']+'
+        regex_patterns = [str(capital + r'\.\ ' + capital + lowercase),
+                str(capital + r'\.\ ' + capital + r'\.\ ' + capital + lowercase),
+                str(capital + r'\.\ ' + capital + r'\.\ ' + capital + r'\.\ ' + capital + lowercase),
+                str(capital + lowercase + r'\,\ ' + capital + r'\.'),
+                str(capital + lowercase + r'\,\ ' + capital + r'\.\ ' + capital + r'\.'),
+                str(capital + lowercase + r'\,\ ' + capital + r'\.\ ' + capital + r'\.\ ' + capital + r'\.'),
+                str(capital + lowercase + r'\ ' + capital[0:-1] + r',3}(?![a-z])')
+                
         ]
-        # ref_auth_list = []
+
+        replace_char_dict = {",":"",".":""}
         for ref in references:
             print(ref)
-            ref_auth_list = [re.findall(pattern, ref["Citation"]) for pattern in regex_patterns]
-            if len(ref_auth_list[-1]) > 0:
-                ref_auth_list = ref_auth_list[-1]
-            print(ref_auth_list)
+            ref_auth_lists = [re.findall(pattern, ref["Citation"]) for pattern in regex_patterns]
+            if len(ref_auth_lists[-1]) > 0:
+                ref_auth_list = ref_auth_lists[-1]
+            else:
+                for auth_list in ref_auth_lists[0:-1]:
+                    auth = [auth.translate(str.maketrans(replace_char_dict)) for auth in auth_list]
+                    initials = [re.findall(str(capital+ '(?![a-z])'), name) for name in auth]
+                    initials = [''.join(letter) for letter in initials]
+                    print(initials)
+                    lastname = [re.findall(capital + lowercase, name) for name in auth]
+                    lastname = [f'{it[0]} ' for it in lastname]
+                    auth = [''.join(map(str, i)) for i in zip(lastname, initials)]
+            # >>>> Convert all to Surname Initials, put in 1 list and then drop dupes! <<<<
+            # Then check if Surname is duplicate > drop the shorter name
+
+                    print(auth)
         # except:
             pass
         pass
-
-# Loop through all items starting at the shortest, if exact match > replace the shorter one 
-# Exception if it starts with Name, A. B., C. Name << 
-
-# Use re.findall
-# START WITH LONGEST REGEX AND THEN GO DOWN IN SPECIFICITY
-# For A. Name, B. Name: [A-Z]{1}\.\ [A-Z]{1}[a-z]+
-# For A. B. Name, C. D. Name: [A-Z]{1}\.\ [A-Z]{1}\.\ [A-Z]{1}[a-z]+
-# For A. B. C. Name: [A-Z]{1}\.\ [A-Z]{1}\.\ [A-Z]{1}\.\ [A-Z]{1}\.\ [A-Z]{1}[a-z]+[A-Z]{1}[a-z]+
-# For Name, A., Name, B.,: [A-Z]{1}[a-z]+\, [A-Z]{1}\.
-# For Name, A. B., Name C. D.,: [A-Z]{1}[a-z]+\, [A-Z]{1}\. [A-Z]{1}\.
-# For Name AB, Name C: [A-Z]{1}[a-z]+\ [A-Z]{1,3}
-# IF Citation = "\xa0" >> drop!
-# >>>> Convert all to Surname Initials, put in 1 list and then drop dupes!
-# Citation, 2 types
-# with A. Name, B. Name, journal >> check if last parsed name is et al; drop it OR Regex for all letter + . + [letters]
-# OR A. B. Name, C. D. Name
-# OR Name, A., Name, B.,
-# with Name A, Name BC. >> regex >> Senstive to CAPS to filter out Journal abbrevs!
-# >> Again 
-
-
-# for ref in ref_dict:
-#                     temp_ref_list
-#                     try:
-#                         if len(ref) > 1:
-#                             temp_ref_list.append(ref["ArticleIdList"])
-#                             # print(ref["ArticleIdList"])
-#                         else:
-#                             temp_ref_list.append(ref["Citation"])
-#                             # print(ref["Citation"])
-#                     except:
-#                         temp_ref_list.append(' ')
-
 
 # Author Format: Surname initials >> Jones B
 # Types of CItation:
