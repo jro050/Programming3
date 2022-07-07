@@ -5,23 +5,22 @@ by Jan Rombouts
 """
 import time
 import socket
-import networkx as nx
 import multiprocessing as mp
-from ParseInterface import ParseInterface
-from ParsePubmedXML import PubMedXMLParser
-from interface_assignment_6 import Interface
+# from InterfaceParser import InterfaceParser
+from PubMedXMLParser import PubMedXMLParser
+from Interface import Interface
 from network_comp_assignment_6 import Connect2Network
 
 if __name__ == "__main__":
 #  to test :python3 assignment6.py -s --port 4 --host '' /data/dataprocessing/NCBI/PubMed/pubmed21n0001.xml 
     AUTHKEY = b'whathasitgotinitspocketsesss?'
     args = Interface()
-    parse_interface = ParseInterface(args.args)
-    fpath = parse_interface.folder_path()
-    IP = parse_interface.host_name()
-    PORTNUM = parse_interface.port_num()
-    number_peons = parse_interface.number_peons()
-    run_mode = parse_interface.run_mode()
+    # parse_interface = InterfaceParser(args.args)
+    fpath = args.folder_path()
+    IP = args.host_name()
+    PORTNUM = args.port_num()
+    number_peons = args.number_peons()
+    run_mode = args.run_mode()
     
     records = PubMedXMLParser(fpath)
     pmids = [pmid for pmid in records.get_pmid()]
@@ -33,7 +32,7 @@ if __name__ == "__main__":
     journals = [journal for journal in records.get_journal()]
     languages = [language for language in records.get_language()]
     references = [reference for reference in records.get_references()]
-    print(len(references))
+    # print(references)
     print(len(languages))
     print(len(journals))
     print(len(co_authors))
@@ -67,5 +66,3 @@ if __name__ == "__main__":
     #     time.sleep(1)
     #     client = mp.Process(target=host.runclient, args=(number_peons,))
     #     client.start()
-
-
