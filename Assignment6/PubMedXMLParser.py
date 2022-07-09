@@ -7,12 +7,11 @@ import time
 import pickle
 import os
 import regex as re
-from weakref import ref
 import networkx as nx
 from Bio import Entrez
 
 # Out nodes:
-# Parse ref 
+# Parse ref
 # > if 1 item > parse the string
 # > if 2 items > get [ArticleIdList][0] == PMID
 
@@ -42,6 +41,17 @@ class PubMedXMLParser:
     def __init__(self, fpath):
         self.fpath = fpath
         self.records = self.read_xml()
+        self.capital = r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}'
+        self.lowercase = r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-\']+'
+        self.regex_patterns = [
+                str(self.capital + r'\.\ ' + self.capital + self.lowercase),
+                str(self.capital + r'\.\ ' + self.capital + r'\.\ ' + self.capital + self.lowercase),
+                str(self.capital + r'\.\ ' + self.capital + r'\.\ ' + self.capital + r'\.\ ' + self.capital + self.lowercase),
+                str(self.capital + self.lowercase + r'\,\ ' + self.capital + r'\.'),
+                str(self.capital + self.lowercase + r'\,\ ' + self.capital + r'\.\ ' + self.capital + r'\.'),
+                str(self.capital + self.lowercase + r'\,\ ' + self.capital + r'\.\ ' + self.capital + r'\.\ ' + self.capital + r'\.'),
+                str(self.capital + self.lowercase + r'\ ' + self.capital[0:-1] + r',3}(?![a-z])')
+        ]
 
     def make_dir(self):
         current_directory = os.getcwd()
@@ -64,25 +74,25 @@ class PubMedXMLParser:
                 yield ' '
 
     def get_main_author(self):
-            for record in self.records:
-                try:
-                    last_name = record["MedlineCitation"]['Article']['AuthorList'][0]['LastName']
-                    initials = record["MedlineCitation"]['Article']['AuthorList'][0]['Initials']
-                    yield str(last_name + ' ' + initials)
-                except:
-                    yield ' '
+        for record in self.records:
+            try:
+                last_name = record["MedlineCitation"]['Article']['AuthorList'][0]['LastName']
+                initials = record["MedlineCitation"]['Article']['AuthorList'][0]['Initials']
+                yield str(last_name + ' ' + initials)
+            except:
+                yield ' '
 
     def get_co_authors(self):
         for record in self.records:
-                try:
-                    author_list = []
-                    for author in record["MedlineCitation"]['Article']['AuthorList'][1:]:
-                        last_name = author['LastName']
-                        initials = author['Initials']
-                        author_list.append(last_name + ' ' + initials)
-                    yield author_list
-                except:
-                    yield []
+            try:
+                author_list = []
+                for author in record["MedlineCitation"]['Article']['AuthorList'][1:]:
+                    last_name = author['LastName']
+                    initials = author['Initials']
+                    author_list.append(last_name + ' ' + initials)
+                yield author_list
+            except:
+                yield []
 
     def get_journal(self):
         for record in self.records:
@@ -122,16 +132,16 @@ class PubMedXMLParser:
 
     def get_references(self):
         for record in self.records:
-            # ref_list = []
-            for temp_ref in record["PubmedData"]["ReferenceList"]:
-                temp_ref = temp_ref["Reference"]
-                # try:
-                if len(temp_ref[0]) > 1:
-                    yield self.get_ref_pmid(temp_ref)
-                else:
-                    yield self.get_ref_authors(temp_ref)
-                # except:
-                    # yield []
+            try:
+                for temp_ref in record["PubmedData"]["ReferenceList"]:
+                    temp_ref = temp_ref["Reference"]
+                    if len(temp_ref[0]) > 1:
+                        ref_list = self.get_ref_pmid(temp_ref)
+                    else:
+                        ref_list = self.get_ref_authors(temp_ref)
+                yield ref_list
+            except:
+                yield []
 
             # yield ref_list    
 
@@ -144,45 +154,77 @@ class PubMedXMLParser:
                 else:
                     ref_list.append(self.get_ref_authors(ref))
             except:
-                    pass
+                    return ref_list
         return ref_list
 
 
     def get_ref_authors(self, references):
-        capital = r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑ]{1}'
-        lowercase = r'[A-ZÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑa-zàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšž\-\']+'
-        regex_patterns = [str(capital + r'\.\ ' + capital + lowercase),
-                str(capital + r'\.\ ' + capital + r'\.\ ' + capital + lowercase),
-                str(capital + r'\.\ ' + capital + r'\.\ ' + capital + r'\.\ ' + capital + lowercase),
-                str(capital + lowercase + r'\,\ ' + capital + r'\.'),
-                str(capital + lowercase + r'\,\ ' + capital + r'\.\ ' + capital + r'\.'),
-                str(capital + lowercase + r'\,\ ' + capital + r'\.\ ' + capital + r'\.\ ' + capital + r'\.'),
-                str(capital + lowercase + r'\ ' + capital[0:-1] + r',3}(?![a-z])')
-                
-        ]
-
         replace_char_dict = {",":"",".":""}
+        ref_list = []
         for ref in references:
-            print(ref)
-            ref_auth_lists = [re.findall(pattern, ref["Citation"]) for pattern in regex_patterns]
+            ref_auth_lists = [re.findall(pattern, ref["Citation"]) for pattern in self.regex_patterns]
             if len(ref_auth_lists[-1]) > 0:
-                ref_auth_list = ref_auth_lists[-1]
+                ref_list.append(ref_auth_lists[-1])
             else:
-                for auth_list in ref_auth_lists[0:-1]:
+                reg1_dict = {}
+                for auth_list in ref_auth_lists[0:3]:
                     auth = [auth.translate(str.maketrans(replace_char_dict)) for auth in auth_list]
-                    initials = [re.findall(str(capital+ '(?![a-z])'), name) for name in auth]
-                    initials = [''.join(letter) for letter in initials]
-                    print(initials)
-                    lastname = [re.findall(capital + lowercase, name) for name in auth]
-                    lastname = [f'{it[0]} ' for it in lastname]
-                    auth = [''.join(map(str, i)) for i in zip(lastname, initials)]
-            # >>>> Convert all to Surname Initials, put in 1 list and then drop dupes! <<<<
-            # Then check if Surname is duplicate > drop the shorter name
+                    reg1_lname = self.get_auth_lastname(auth)
+                    reg1_init = self.get_auth_initials(auth)
+                    for i in range(len(reg1_lname)):
+                        if reg1_lname[i] in reg1_dict.keys():
+                            if len(reg1_lname[i]) > len(reg1_dict[reg1_lname[i]]):
+                                reg1_dict[reg1_lname[i]] = reg1_init[i]
+                        else:
+                            reg1_dict[reg1_lname[i]] = reg1_init[i]
+                reg2_dict = {}
+                for auth_list in ref_auth_lists[3:6]:
+                    auth = [auth.translate(str.maketrans(replace_char_dict)) for auth in auth_list]
+                    reg2_lname = self.get_auth_lastname(auth)
+                    reg2_init = self.get_auth_initials(auth)
+                    for i in range(len(reg2_lname)):
+                        if reg2_lname[i] in reg2_dict.keys():
+                            if len(reg2_lname[i]) > len(reg2_dict[reg2_lname[i]]):
+                                reg2_dict[reg2_lname[i]] = reg2_init[i]
+                        else:
+                            reg2_dict[reg2_lname[i]] = reg2_init[i]
+                ref_list.append(self.get_correct_authors(reg1_dict, reg2_dict))
+        return ref_list
 
-                    print(auth)
-        # except:
-            pass
-        pass
+    def get_correct_authors(self, reg1_dict, reg2_dict):
+        if len(reg1_dict) == 0:
+            auth_dict = reg2_dict
+            auth_list = [''.join(map(str, i)) for i in zip(auth_dict.keys(), auth_dict.values())]
+            return auth_list
+        if len(reg2_dict) == 0:
+            auth_dict = reg1_dict
+            auth_list = [''.join(map(str, i)) for i in zip(auth_dict.keys(), auth_dict.values())]
+            return auth_list
+        if len(reg1_dict) == len(reg2_dict):
+            auth_dict = {**reg1_dict, **reg2_dict}
+            auth_list = [''.join(map(str, i)) for i in zip(auth_dict.keys(), auth_dict.values())]
+            return auth_list
+        if len(reg1_dict) > len(reg2_dict):
+            co_auth_dict = reg1_dict
+            main_auth_dict = reg2_dict
+        else:
+            co_auth_dict = reg2_dict
+            main_auth_dict = reg1_dict
+
+        main_auth = list(set(main_auth_dict) - set(co_auth_dict))[0]
+        co_auth_dict[main_auth] = main_auth_dict[main_auth]
+        auth_list = [''.join(map(str, i)) for i in zip(co_auth_dict.keys(), co_auth_dict.values())]
+        return auth_list
+
+    def get_auth_initials(self, author_list):
+        initials = [re.findall(str(self.capital+ r'(?!' + self.lowercase[:-6] + r'])'), name) for name in author_list]
+        initials = [''.join(letter) for letter in initials]
+        return initials
+        
+    def get_auth_lastname(self, author_list):
+        lastname = [re.findall(self.capital + self.lowercase, name) for name in author_list]
+        lastname = [f'{it[0]} ' for it in lastname]
+        return lastname
 
 # Author Format: Surname initials >> Jones B
 # Types of CItation:
